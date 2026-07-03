@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AstroMindAI Terminal</title>
+    <style>
+        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; }
+        .stars { position: absolute; width: 100%; height: 100%; z-index: 1; opacity: 0.3; pointer-events: none; }
+        
+        /* Your Sketched Layout Structure Wireframe Layout */
+        .app-container { position: relative; z-index: 2; height: 100vh; display: flex; flex-direction: column; padding: 15px; box-sizing: border-box; }
+        .branding { text-align: center; font-size: 14px; color: #888; margin-bottom: 10px; }
+        .answer-box { flex: 2; background: rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); overflow-y: auto; font-size: 14px; }
+        .split-view { flex: 4; display: flex; gap: 15px; margin-bottom: 15px; }
+        
+        .image-card { flex: 1.2; background: #111; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); background-size: cover; background-position: center; transition: background 0.5s ease-in-out; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #666; }
+        .explanation-card { flex: 1; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px; font-size: 13px; overflow-y: auto; line-height: 1.4; border: 1px solid rgba(255,255,255,0.05); }
+        
+        .input-area { display: flex; gap: 10px; margin-bottom: 10px; }
+        input { flex: 1; padding: 12px 20px; border-radius: 25px; border: 1px solid #333; background: #111; color: #fff; font-size: 16px; }
+        button { padding: 0 25px; border-radius: 25px; border: none; background: #0070f3; color: #fff; font-weight: bold; cursor: pointer; }
+
+        /* FLOATING HUMANOID ROBO OVERLAY */
+        #robo-avatar { position: absolute; z-index: 99; left: 60%; top: 15%; transition: all 1.2s cubic-bezier(0.25, 1, 0.5, 1); text-align: center; }
+        .speech-bubble { background: #0056b3; padding: 6px 12px; border-radius: 8px; font-size: 11px; max-width: 140px; margin-bottom: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); font-weight: bold; }
+        .robot-body { font-size: 55px; cursor: pointer; animation: breathe 3s ease-in-out infinite; }
+        @keyframes breathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    </style>
+</head>
+<body>
+    <div class="stars">✨ * * * * ✨ * * * * ✨</div>
+    
+    <div class="app-container">
+        <div class="branding">Powered by AstroMind AI</div>
+        
+        <div class="answer-box" id="ai-chat">Greetings Commander! Type a specific cosmic target asset (like "Mars Rover" or "Saturn") below. I will fetch a real image from the web and walk down to analyze it!</div>
+        
+        <div class="split-view">
+            <div class="image-card" id="img-target">Awaiting Visual Fetch Assets...</div>
+            <div class="explanation-card" id="ai-explain">Visual target structural parameters will compile here...</div>
+        </div>
+        
+        <div class="input-area">
+            <input type="text" id="msg-input" placeholder="Type a space object...">
+            <button onclick="executeBackendSearch()">Search & Explain</button>
+        </div>
+    </div>
+
+    <!-- Floating Robot -->
+    <div id="robo-avatar">
+        <div class="speech-bubble" id="robo-speech">System Ready!</div>
+        <div class="robot-body">🤖</div>
+    </div>
+
+    <script>
+        function stopVoice() { window.speechSynthesis.cancel(); }
+
+        function triggerSpeechEngine(text) {
+            stopVoice();
+            let utterance = new SpeechSynthesisUtterance(text.substring(0, 200));
+            window.speechSynthesis.speak(utterance);
+        }
+
+        async function executeBackendSearch() {
+            const inputElement = document.getElementById('msg-input');
+            const targetObject = inputElement.value.trim();
+            if(!targetObject) return;
+
+            const chatDisplay = document.getElementById('ai-chat');
+            const imageDisplay = document.getElementById('img-target');
+            const explanationDisplay = document.getElementById('ai-explain');
+            const roboSpeech = document.getElementById('robo-speech');
+            const roboMesh = document.getElementById('robo-avatar');
+
+            inputElement.value = "";
+            chatDisplay.innerHTML = `🌀 <i>AstroMind Server processing core scripts... Query: "${targetObject}"</i>`;
+            imageDisplay.innerText = "🔍 Fetching Google image engine asset...";
+            imageDisplay.style.backgroundImage = "none";
+            explanationDisplay.innerText = "Awaiting pixel confirmation loops...";
+            roboSpeech.innerText = "Locating image...";
+            
+            roboMesh.style.top = "18%";
+            roboMesh.style.left = "40%";
+
+            try {
+                // Call the app.py backend endpoint securely
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ "query": targetObject })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Update Image Card frame elements
+                imageDisplay.innerText = "";
+                imageDisplay.style.backgroundImage = `url('${data.image_url}')`;
+                
+                // Update Text Cards
+                chatDisplay.innerHTML = `<b>AstroMindAI Telemetry Node:</b> Target query [${targetObject}] verified successfully.`;
+                explanationDisplay.innerHTML = `<b>Robo Analytics Card:</b><br><br>${data.explanation}`;
+
+                // COMMAND THE ROBO TO WALK DOWN AND EXPLAIN
+                roboMesh.style.top = "45%";
+                roboMesh.style.left = "8%";
+                roboSpeech.innerText = "Check this out!";
+
+                // Talk through your phone speakers
+                triggerSpeechEngine(`Commander, I found an image of ${targetObject}! ${data.explanation}`);
+
+            } catch (err) {
+                console.error(err);
+                chatDisplay.innerText = "Telemetry sync failed or server timeout. Try another phrase!";
+                imageDisplay.innerText = "Fetch Error.";
+                roboSpeech.innerText = "System Fault!";
+            }
+        }
+    </script>
+</body>
+  </html>
+  
